@@ -38,9 +38,13 @@ if logged_in:
     print("Searching for '" + args.query + "'...")
 
     search_page = browser.get("http://www.giantbomb.com/search/?indices[0]=video&page=1&q="+ query_url)
-    results_str = search_page.soup.find('li', class_='paginate__results').string
-    num_results = int(results_str[0:results_str.find(' ')])
-    print(str(num_results) + " results")
+    try:
+        results_str = search_page.soup.find('li', class_='paginate__results').string
+        num_results = int(results_str[0:results_str.find(' ')])
+        print(str(num_results) + " results")
+    except:
+        num_results = 15
+        print("Less than 15 results")
     num_pages = math.ceil(num_results/15)
 
     page_links = []
