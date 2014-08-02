@@ -4,40 +4,42 @@ import argparse
 import math
 
 parser = argparse.ArgumentParser(description='Download Giantbomb Videos')
-parser.add_argument('username')
-parser.add_argument('password')
 parser.add_argument('query')
 args = parser.parse_args()
 
 browser = mechanicalsoup.Browser()
 
+username = input("Please enter your Giant Bomb premium username: ")
+password = input("Please enter your password: ")
+
 #Login
 print("Logging in...")
 login_page = browser.get('http://auth.giantbomb.com/login')
 login_form = login_page.soup.select('#login')[0]
-login_form.select('input')[0]['value'] = args.username
-login_form.select('input')[1]['value'] = args.password
+login_form.select('input')[0]['value'] = username
+login_form.select('input')[1]['value'] = password
 page2 = browser.submit(login_form, login_page.url)
 
 #Verify login worked
 check = browser.get("http://auth.giantbomb.com/account")
 logged_in = False
 for tag in check.soup.p:
-    if args.username in tag.string:
+    if username in tag.string:
         logged_in = True
 
-
-
 if logged_in:
+    #Get list of already downloaded videos
     try:
         ignore_links = open('ignore').readlines()
     except:
         ignore_links = []
+    #Clean up query format and create link
     query = args.query.replace(' ', '%20')
     query_url = "http://www.giantbomb.com/search/?indices[0]=video&page=1&q=" + query
     print("Searching for '" + args.query + "'...")
 
     search_page = browser.get("http://www.giantbomb.com/search/?indices[0]=video&page=1&q="+ query_url)
+    #Search page only shows number of results if there's more than one page for some reason - make it 15 because 15/15 = 1 page
     try:
         results_str = search_page.soup.find('li', class_='paginate__results').string
         num_results = int(results_str[0:results_str.find(' ')])
@@ -46,7 +48,7 @@ if logged_in:
         num_results = 15
         print("Less than 15 results")
     num_pages = math.ceil(num_results/15)
-
+    #Iterate through search result pages and generate list of links to the video pages - still not video file itself.
     page_links = []
     print("Writing links to file...")
     for i in list(range(1, num_pages+1)):
