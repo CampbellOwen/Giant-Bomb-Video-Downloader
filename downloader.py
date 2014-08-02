@@ -5,12 +5,18 @@ import math
 
 parser = argparse.ArgumentParser(description='Download Giantbomb Videos')
 parser.add_argument('query')
+parser.add_argument("-q", "--quality", type=str)
 args = parser.parse_args()
 
 browser = mechanicalsoup.Browser()
 
 username = input("Please enter your Giant Bomb premium username: ")
 password = input("Please enter your password: ")
+#Default to High
+if args.quality == None:
+    quality = "High"
+else:
+    quality = args.quality
 
 #Login
 print("Logging in...")
@@ -56,39 +62,41 @@ if logged_in:
         results = page.soup.find_all('a', class_="js-ajax-api-track-anchor")
         for x in list(range(len(results))):
            page_links.append(results[x]['href'])
-    try:
-        os.remove('search_results')
-    except:
-        None
-    with open("search_results", "a") as text:
+    #Write links to file to allow user to curate
+    with open("search_results", "w") as text:
         for x in page_links:
             text.write('http://www.giantbomb.com' + x + '\n')
     input("Press enter to choose which videos to download") 
     os.system('vim search_results')
     print("Retrieving video links...")
     final_list = open("search_results").readlines()
+    #Iterate through video pages and grab the video links - discarding if already downloaded
     video_urls = []
     for i in list(range(len(final_list))):
         final_list[i] = final_list[i][:len(final_list[i])-1]
         video_page = browser.get(final_list[i])
-        url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text='High')[0].attrs['href']
+        url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text=quality)[0].attrs['href']
         duplicate = False
         for i in ignore_links:
             if url in i:
                 duplicate = True
         if not duplicate:
             video_urls.append(url)
+    #Make a folder named for the query if not already existing
     if not os.path.isdir("~/'Giant Bomb'/" + args.query):
         os.system("mkdir -p ~/'Giant Bomb'/'" + args.query + "'")
+    #Download videos
     for i in list(range(len(video_urls))):
         print("Downloading video " + str(i+1) +"/" + str(len(video_urls)))
         command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; cd -; }"
         print(command)
         os.system(command)
         ignore_links.append(video_urls[i])
+    #Add videos to ignore list
     with open('ignore', 'w') as text:
         for x in ignore_links:
             text.write(x + '\n')
+    #Clean up
     os.system('rm search_results')
 else:
     print("Error logging in, please try again")
