@@ -12,6 +12,7 @@ browser = mechanicalsoup.Browser()
 
 username = input("Please enter your Giant Bomb premium username: ")
 password = input("Please enter your password: ")
+
 #Default to High
 if args.quality == None:
     quality = "High"
