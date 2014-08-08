@@ -92,14 +92,17 @@ if logged_in:
     #Download videos
     for i in list(range(len(video_urls))):
         print("Downloading video " + str(i+1) +"/" + str(len(video_urls)))
-        command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; mv " + video_urls[i][28:] + " " + names[i] + video_urls[-4:] + " cd -; }"
+        command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; mv " + video_urls[i][29:] + " '" + names[i] + video_urls[i][-4:] + "'; cd -; }"
         print(command)
         os.system(command)
         ignore_links.append(video_urls[i])
     #Add videos to ignore list
     with open('ignore', 'w') as text:
         for x in ignore_links:
-            text.write(x + '\n')
+            if x == ignore_links[len(ignore_links)-1]:
+                text.write(x)
+            else:
+                text.write(x + '\n')
     #Clean up
     os.system('rm search_results')
 else:
