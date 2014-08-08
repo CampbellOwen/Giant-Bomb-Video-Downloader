@@ -3,6 +3,12 @@ import mechanicalsoup
 import argparse
 import math
 
+def find_s(s, ch):
+    return [i for i, ltr in enumerate(s) if ltr ==ch]
+
+def get_filename(url):
+    return url[find_s(url, "/")[len(find_s(url, "/"))-1]+1:]
+
 parser = argparse.ArgumentParser(description='Download Giantbomb Videos')
 parser.add_argument('query')
 parser.add_argument("-q", "--quality", type=str)
@@ -92,7 +98,7 @@ if logged_in:
     #Download videos
     for i in list(range(len(video_urls))):
         print("Downloading video " + str(i+1) +"/" + str(len(video_urls)))
-        command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; mv " + video_urls[i][29:] + " '" + names[i] + video_urls[i][-4:] + "'; cd -; }"
+        command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; mv " + get_filename(video_urls[i]) + " '" + names[i] + video_urls[i][-4:] + "'; cd -; }"
         print(command)
         os.system(command)
         ignore_links.append(video_urls[i])
