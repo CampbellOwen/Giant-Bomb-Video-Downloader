@@ -73,23 +73,26 @@ if logged_in:
     final_list = open("search_results").readlines()
     #Iterate through video pages and grab the video links - discarding if already downloaded
     video_urls = []
+    names = []
     for i in list(range(len(final_list))):
         final_list[i] = final_list[i][:len(final_list[i])-1]
         video_page = browser.get(final_list[i])
         url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text=quality)[0].attrs['href']
+        name = video_page.soup.h2.string
         duplicate = False
         for i in ignore_links:
             if url in i:
                 duplicate = True
         if not duplicate:
             video_urls.append(url)
+            names.append(name)
     #Make a folder named for the query if not already existing
     if not os.path.isdir("~/'Giant Bomb'/" + args.query):
         os.system("mkdir -p ~/'Giant Bomb'/'" + args.query + "'")
     #Download videos
     for i in list(range(len(video_urls))):
         print("Downloading video " + str(i+1) +"/" + str(len(video_urls)))
-        command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; cd -; }"
+        command = "cd ~/'Giant Bomb'/'" + args.query + "'  && { curl -O " + video_urls[i] +" ; mv " + video_urls[i][28:] + " " + names[i] + video_urls[-4:] + " cd -; }"
         print(command)
         os.system(command)
         ignore_links.append(video_urls[i])
