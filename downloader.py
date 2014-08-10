@@ -19,7 +19,7 @@ browser = mechanicalsoup.Browser()
 username = input("Please enter your Giant Bomb premium username: ")
 password = input("Please enter your password: ")
 
-#Default to High
+#Default to High quality
 if args.quality == None:
     quality = "High"
 else:
@@ -44,6 +44,8 @@ if logged_in:
     #Get list of already downloaded videos
     try:
         ignore_links = open('ignore').readlines()
+        for i in list(range(len(ignore_links))):
+            ignore_links[i] = ignore_links[i][:-1]
     except:
         ignore_links = []
     #Clean up query format and create link
