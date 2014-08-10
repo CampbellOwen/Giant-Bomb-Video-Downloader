@@ -86,7 +86,7 @@ if logged_in:
         final_list[i] = final_list[i][:len(final_list[i])-1]
         video_page = browser.get(final_list[i])
         url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text=quality)[0].attrs['href']
-        name = video_page.soup.h2.string
+        name = video_page.soup.h2.string.replace('/', '.')
         duplicate = False
         for i in ignore_links:
             if url in i:
