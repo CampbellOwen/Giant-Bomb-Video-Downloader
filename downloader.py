@@ -2,6 +2,7 @@ import os
 import mechanicalsoup
 import argparse
 import math
+import getpass
 
 def find_s(s, ch):
     return [i for i, ltr in enumerate(s) if ltr ==ch]
@@ -17,7 +18,7 @@ args = parser.parse_args()
 browser = mechanicalsoup.Browser()
 
 username = input("Please enter your Giant Bomb premium username: ")
-password = input("Please enter your password: ")
+password = getpass.getpass("Please enter your password: ")
 
 #Default to High quality
 if args.quality == None:
@@ -44,6 +45,7 @@ if logged_in:
     #Get list of already downloaded videos
     try:
         ignore_links = open('ignore').readlines()
+        #Remove \n
         for i in list(range(len(ignore_links))):
             ignore_links[i] = ignore_links[i][:-1]
     except:
@@ -87,6 +89,7 @@ if logged_in:
         video_page = browser.get(final_list[i])
         url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text=quality)[0].attrs['href']
         name = video_page.soup.h2.string.replace('/', '.')
+        name = video_page.soup.h2.string.replace("'", '')
         duplicate = False
         for i in ignore_links:
             if url in i:
