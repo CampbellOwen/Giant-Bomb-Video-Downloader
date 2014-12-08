@@ -13,6 +13,7 @@ def get_filename(url):
 parser = argparse.ArgumentParser(description='Download Giantbomb Videos')
 parser.add_argument('query')
 parser.add_argument("-q", "--quality", type=str)
+parser.add_argument("-c", "--content", type=str)
 args = parser.parse_args()
 
 browser = mechanicalsoup.Browser()
@@ -25,6 +26,12 @@ if args.quality == None:
     quality = "High"
 else:
     quality = args.quality
+
+#Default to Video
+if args.content == None:
+    content = 'video'
+else:
+    content = args.content
 
 #Login
 print("Logging in...")
@@ -42,7 +49,7 @@ for tag in check.soup.p:
         logged_in = True
 
 if logged_in:
-    #Get list of already downloaded videos
+    #Get ignore list
     try:
         ignore_links = open('ignore').readlines()
         #Remove \n
@@ -52,10 +59,10 @@ if logged_in:
         ignore_links = []
     #Clean up query format and create link
     query = args.query.replace(' ', '%20')
-    query_url = "http://www.giantbomb.com/search/?indices[0]=video&page=1&q=" + query
+    query_url = "http://www.giantbomb.com/search/?indices[0]="+content+"&page=1&q=" + query
     print("Searching for '" + args.query + "'...")
 
-    search_page = browser.get("http://www.giantbomb.com/search/?indices[0]=video&page=1&q="+ query_url)
+    search_page = browser.get("http://www.giantbomb.com/search/?indices[0]="+content+"&page=1&q="+ query_url)
     #Search page only shows number of results if there's more than one page for some reason - make it 15 because 15/15 = 1 page
     try:
         results_str = search_page.soup.find('li', class_='paginate__results').string
@@ -69,34 +76,53 @@ if logged_in:
     page_links = []
     print("Writing links to file...")
     for i in list(range(1, num_pages+1)):
-        page = browser.get('http://www.giantbomb.com/search/?indices[0]=video&page=' + str(i) + '&q=' + query)
+        page = browser.get('http://www.giantbomb.com/search/?indices[]='+content+'&page=' + str(i) + '&q=' + query)
         results = page.soup.find_all('a', class_="js-ajax-api-track-anchor")
         for x in list(range(len(results))):
            page_links.append(results[x]['href'])
+
     #Write links to file to allow user to curate
     with open("search_results", "w") as text:
         for x in page_links:
             text.write('http://www.giantbomb.com' + x + '\n')
-    input("Press enter to choose which videos to download") 
+    input("Press enter to choose which "+content+"s to download") 
     os.system('vim search_results')
-    print("Retrieving video links...")
+
+    print("Retrieving links...")
     final_list = open("search_results").readlines()
     #Iterate through video pages and grab the video links - discarding if already downloaded
     video_urls = []
     names = []
-    for i in list(range(len(final_list))):
-        final_list[i] = final_list[i][:len(final_list[i])-1]
-        video_page = browser.get(final_list[i])
-        url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text=quality)[0].attrs['href']
-        name = video_page.soup.h2.string.replace('/', '.')
-        name = video_page.soup.h2.string.replace("'", '')
-        duplicate = False
-        for i in ignore_links:
-            if url in i:
-                duplicate = True
-        if not duplicate:
-            video_urls.append(url)
-            names.append(name)
+    if content == 'video':
+        for i in list(range(len(final_list))):
+            final_list[i] = final_list[i][:len(final_list[i])-1]
+            video_page = browser.get(final_list[i])
+            url = video_page.soup.find_all('ul', class_='pull-bottom')[0].find_all('a', text=quality)[0].attrs['href']
+            name = video_page.soup.h2.string.replace('/', '.')
+            name = name.replace("'", '')
+            duplicate = False
+            for i in ignore_links:
+                if url in i:
+                    duplicate = True
+            if not duplicate:
+                video_urls.append(url)
+                names.append(name)
+    elif content == 'podcast':
+        for i in list(range(len(final_list))):
+            final_list[i] = final_list[i][:len(final_list[i])-1]
+            print(final_list[i])
+            video_page = browser.get(final_list[i])
+            url = video_page.soup.find_all('a', id='top_podcast')[0].attrs['href']
+            url = "http://v.giantbomb.com/podcast/"+url[47:]
+            name = video_page.soup.h2.string.replace('/', '.')
+            name = name.replace("'", "")
+            duplicate = False
+            for i in ignore_links:
+                if url in i:
+                    duplicate = True
+            if not duplicate:
+                video_urls.append(url)
+                names.append(name)
     #Make a folder named for the query if not already existing
     if not os.path.isdir("~/'Giant Bomb'/" + args.query):
         os.system("mkdir -p ~/'Giant Bomb'/'" + args.query + "'")
